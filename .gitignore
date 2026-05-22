@@ -24,3 +24,5 @@ Thumbs.db
 # Database backups — local only, never commit
 /backups/
 .env.save
+database.sqlite-shm
+database.sqlite-wal
