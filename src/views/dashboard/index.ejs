@@ -1,0 +1,180 @@
+<%- include('../partials/header', { title: 'Coming Up' }) %>
+
+<%
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+function daysUntil(d) {
+  return Math.ceil((new Date(d + 'T12:00:00') - new Date()) / 86400000);
+}
+function urgencyClass(d) {
+  const n = daysUntil(d);
+  if (n <= 3)  return 'text-red-600 font-semibold';
+  if (n <= 7)  return 'text-orange-600 font-medium';
+  if (n <= 14) return 'text-amber-600';
+  return 'text-slate-600';
+}
+// Returns the best link for an event: specific event URL if available, else the source homepage.
+function eventLink(ev) {
+  return ev.url || ev.source_url || null;
+}
+// Label: deadlines get "Register →", events get "Learn More →"
+function ctaLabel(kind) {
+  return kind === 'deadline' ? 'Register →' : 'Learn More →';
+}
+%>
+
+<div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+  <div>
+    <h1 class="text-2xl font-bold">Coming Up</h1>
+    <p class="text-sm text-slate-500 mt-0.5">
+      <%= new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) %>
+    </p>
+  </div>
+  <div class="flex gap-2 text-sm shrink-0">
+    <a href="/calendar" class="bg-white border border-slate-200 hover:border-slate-300 px-3 py-2 rounded font-medium text-slate-700">
+      Calendar view →
+    </a>
+    <a href="/calendar/export" class="bg-white border border-slate-200 hover:border-slate-300 px-3 py-2 rounded text-slate-600">
+      Export .ics
+    </a>
+  </div>
+</div>
+
+<% if (items.length === 0) { %>
+  <div class="text-center py-20 text-slate-400">
+    <p class="text-4xl mb-4">📋</p>
+    <p class="text-lg font-medium text-slate-600">Nothing coming up yet</p>
+    <p class="mt-2 text-sm">
+      <a href="/sources" class="text-blue-600 hover:underline">Refresh your websites</a> to populate events,
+      or <a href="/birthdays/new" class="text-blue-600 hover:underline">add a birthday party</a>.
+    </p>
+  </div>
+<% } else { %>
+
+  <%
+  let lastWeekLabel = null;
+  %>
+
+  <div class="space-y-1">
+  <% items.forEach(function(item) {
+    const d = item.sortDate;
+    const n = daysUntil(d);
+    let weekLabel;
+    if (n < 0)        weekLabel = 'Past';
+    else if (n === 0) weekLabel = 'Today';
+    else if (n === 1) weekLabel = 'Tomorrow';
+    else if (n <= 7)  weekLabel = 'This week';
+    else if (n <= 14) weekLabel = 'Next week';
+    else {
+      const dt = new Date(d + 'T12:00:00');
+      weekLabel = dt.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    }
+  %>
+
+  <% if (weekLabel !== lastWeekLabel) {
+    lastWeekLabel = weekLabel;
+  %>
+    <div class="pt-5 pb-1 first:pt-0">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400"><%= weekLabel %></span>
+    </div>
+  <% } %>
+
+  <% if (item.kind === 'deadline') {
+    const link = eventLink(item.ev);
+  %>
+    <div class="bg-white rounded-lg border border-orange-100 hover:border-orange-200 p-3.5 flex items-start justify-between gap-4 transition-colors">
+      <div class="flex gap-3 items-start min-w-0 flex-1">
+        <span class="mt-0.5 shrink-0 text-base">⏰</span>
+        <div class="min-w-0">
+          <p class="font-medium text-slate-900 truncate"><%= item.ev.title %></p>
+          <% if (item.ev.description) { %><p class="text-sm text-slate-500 truncate mt-0.5"><%= item.ev.description %></p><% } %>
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span class="text-xs bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded capitalize">deadline</span>
+            <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded capitalize"><%= item.ev.category %></span>
+            <% if (!link) { %><span class="text-xs text-slate-400">via <%= item.ev.source_name %></span><% } %>
+          </div>
+        </div>
+      </div>
+      <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+        <p class="text-sm <%= urgencyClass(d) %>"><%= fmtDate(d) %></p>
+        <% if (n >= 0) { %><p class="text-xs text-slate-400"><%= n === 0 ? 'Today!' : n + 'd left' %></p><% } %>
+        <% if (link) { %>
+          <a href="<%= link %>" target="_blank" rel="noopener noreferrer"
+             class="inline-block text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition whitespace-nowrap">
+            Register →
+          </a>
+        <% } else { %>
+          <span class="text-xs text-slate-400 italic">No link available</span>
+        <% } %>
+      </div>
+    </div>
+
+  <% } else if (item.kind === 'event') {
+    const link = eventLink(item.ev);
+  %>
+    <div class="bg-white rounded-lg border border-slate-200 hover:border-slate-300 p-3.5 flex items-start justify-between gap-4 transition-colors">
+      <div class="flex gap-3 items-start min-w-0 flex-1">
+        <span class="mt-0.5 shrink-0 text-base">📅</span>
+        <div class="min-w-0">
+          <p class="font-medium text-slate-900 truncate"><%= item.ev.title %></p>
+          <% if (item.ev.description) { %><p class="text-sm text-slate-500 truncate mt-0.5"><%= item.ev.description %></p><% } %>
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded capitalize"><%= item.ev.category %></span>
+            <% if (!link) { %><span class="text-xs text-slate-400">via <%= item.ev.source_name %></span><% } %>
+          </div>
+        </div>
+      </div>
+      <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+        <p class="text-sm text-slate-600"><%= fmtDate(d) %></p>
+        <% if (link) { %>
+          <a href="<%= link %>" target="_blank" rel="noopener noreferrer"
+             class="inline-block text-xs font-medium border border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg transition whitespace-nowrap">
+            Learn More →
+          </a>
+        <% } else { %>
+          <span class="text-xs text-slate-400 italic">No link available</span>
+        <% } %>
+      </div>
+    </div>
+
+  <% } else if (item.kind === 'birthday_reminder') { %>
+    <a href="/birthdays/<%= item.b.id %>" class="block bg-pink-50 rounded-lg border border-pink-200 hover:border-pink-300 p-3.5 flex items-start justify-between gap-4 transition-colors">
+      <div class="flex gap-3 items-start min-w-0">
+        <span class="mt-0.5 shrink-0 text-base">🎁</span>
+        <div class="min-w-0">
+          <p class="font-medium text-slate-900">Gift reminder — <%= item.b.child_name %> turns <%= item.b.child_age %></p>
+          <p class="text-sm text-slate-500">Party is <%= fmtDate(item.b.party_date) %></p>
+          <% if (item.b.gift_count > 0) { %>
+            <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded mt-1 inline-block"><%= item.b.gift_count %> gift ideas ready</span>
+          <% } else { %>
+            <span class="text-xs bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded mt-1 inline-block">No gift ideas yet</span>
+          <% } %>
+        </div>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="text-sm <%= urgencyClass(d) %>"><%= fmtDate(d) %></p>
+        <p class="text-xs text-slate-400"><%= daysUntil(d) %>d away</p>
+      </div>
+    </a>
+
+  <% } else if (item.kind === 'birthday_party') { %>
+    <a href="/birthdays/<%= item.b.id %>" class="block bg-white rounded-lg border border-slate-200 hover:border-pink-200 p-3.5 flex items-start justify-between gap-4 transition-colors">
+      <div class="flex gap-3 items-start min-w-0">
+        <span class="mt-0.5 shrink-0 text-base">🎂</span>
+        <div>
+          <p class="font-medium text-slate-900"><%= item.b.child_name %>'s party</p>
+          <p class="text-sm text-slate-500">Age <%= item.b.child_age %></p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 shrink-0"><%= fmtDate(d) %></p>
+    </a>
+  <% } %>
+
+  <% }); %>
+  </div>
+
+<% } %>
+
+<%- include('../partials/footer') %>

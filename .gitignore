@@ -1,0 +1,26 @@
+# Secrets & environment
+.env
+
+# Database — contains real user/child data, never commit
+database.sqlite
+database.sqlite-journal
+*.sqlite
+*.sqlite-journal
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Runtime / OS
+.DS_Store
+Thumbs.db
+
+# Playwright browsers
+/playwright-browsers/
+
+# Database backups — local only, never commit
+/backups/
+.env.save

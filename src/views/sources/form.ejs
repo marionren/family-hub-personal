@@ -1,0 +1,56 @@
+<%- include('../partials/header', { title: source ? 'Edit Website' : 'Add Website' }) %>
+
+<div class="max-w-lg">
+  <h1 class="text-2xl font-bold mb-6"><%= source ? 'Edit Website' : 'Add Website' %></h1>
+
+  <% if (error) { %>
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="<%= source ? '/sources/' + source.id : '/sources' %>" class="bg-white rounded-lg shadow p-6 space-y-4">
+    <% if (source) { %><input type="hidden" name="_method" value="UPDATE" /><% } %>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+      <input type="text" name="name" required value="<%= source ? source.name : '' %>"
+        class="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">URL</label>
+      <input type="url" name="url" required value="<%= source ? source.url : '' %>"
+        class="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+      <select name="category" required class="w-full border border-slate-300 rounded px-3 py-2 text-sm">
+        <% ['school','district','camp','preschool','afterschool','activity','community','tutoring','enrichment','other'].forEach(cat => { %>
+          <option value="<%= cat %>" <%= source && source.category === cat ? 'selected' : '' %>><%= cat %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <% if (source) { %>
+    <div class="flex items-center gap-2">
+      <input type="checkbox" name="active" id="active" <%= source.active ? 'checked' : '' %> class="rounded" />
+      <label for="active" class="text-sm text-slate-700">Active (refresh this website)</label>
+    </div>
+    <% } %>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 text-sm">
+        <%= source ? 'Save Changes' : 'Add Website' %>
+      </button>
+      <a href="/sources" class="text-slate-500 px-4 py-2 hover:text-slate-700 text-sm">Cancel</a>
+
+      <% if (source) { %>
+      <form method="POST" action="/sources/<%= source.id %>" class="ml-auto">
+        <input type="hidden" name="_method" value="DELETE" />
+        <button type="submit" onclick="return confirm('Delete this source and all its events?')"
+          class="text-red-500 hover:text-red-700 text-sm">Delete</button>
+      </form>
+      <% } %>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,40 @@
+<%- include('../partials/header', { title: 'Settings' }) %>
+
+<div class="max-w-xl">
+  <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+  <% if (flash === 'token_regenerated') { %>
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 text-sm font-medium">
+      ✓ Calendar URL regenerated. Your old URL is now invalid.
+    </div>
+  <% } %>
+
+  <!-- Calendar Subscription -->
+  <section class="bg-white rounded-xl border border-slate-200 p-6">
+    <h2 class="text-base font-semibold text-slate-900 mb-1">Google Calendar Subscribe URL</h2>
+    <p class="text-sm text-slate-500 mb-4">Add this URL to Google Calendar once — it auto-refreshes as new events are scraped.</p>
+    <% if (webcalUrl) { %>
+    <div class="flex gap-2 items-center">
+      <code class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 truncate select-all" id="webcal-url">
+        <%= webcalUrl %>
+      </code>
+      <button onclick="navigator.clipboard.writeText(document.getElementById('webcal-url').textContent.trim()).then(()=>this.textContent='Copied!')"
+        class="shrink-0 text-xs bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg transition font-medium">
+        Copy
+      </button>
+    </div>
+    <div class="mt-3">
+      <form method="POST" action="/settings/regenerate-calendar-token" onsubmit="return confirm('This will break your existing calendar subscription URL. Continue?')">
+        <button type="submit"
+          class="text-sm text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg hover:border-red-300 transition">
+          Regenerate URL
+        </button>
+      </form>
+    </div>
+    <% } else { %>
+    <p class="text-sm text-amber-600">No calendar token found. Run <code class="bg-slate-100 px-1 rounded">node src/db/bootstrap.js</code> to generate one.</p>
+    <% } %>
+  </section>
+</div>
+
+<%- include('../partials/footer') %>

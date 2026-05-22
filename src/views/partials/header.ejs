@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>Family Intelligence Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+<nav class="bg-white border-b border-slate-200 px-6 py-0 flex items-center sticky top-0 z-50">
+  <a href="/" class="font-semibold text-slate-900 py-4 mr-6 shrink-0">Family Hub</a>
+  <div class="flex gap-1 text-sm flex-1">
+    <a href="/"          class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/">Coming Up</a>
+    <a href="/calendar"  class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/calendar">Calendar</a>
+    <a href="/events"    class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/events">All Events</a>
+    <a href="/birthdays" class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/birthdays">Birthdays</a>
+    <a href="/sources"   class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/sources">Websites</a>
+    <a href="/settings"  class="nav-link px-3 py-4 hover:text-blue-600 border-b-2 border-transparent" data-path="/settings">Settings</a>
+  </div>
+</nav>
+<script>
+  (function() {
+    const path = window.location.pathname;
+    document.querySelectorAll('.nav-link').forEach(function(a) {
+      const linkPath = a.getAttribute('data-path');
+      const active = linkPath === '/' ? path === '/' : path.startsWith(linkPath);
+      if (active) a.classList.add('border-blue-500', 'text-blue-600', 'font-medium');
+    });
+  })();
+</script>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">

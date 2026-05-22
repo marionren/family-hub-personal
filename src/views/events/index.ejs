@@ -1,0 +1,144 @@
+<%- include('../partials/header', { title: 'All Events' }) %>
+
+<%
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+// Best URL: specific event URL first, source homepage as fallback
+function eventLink(ev) {
+  return ev.url || ev.source_url || null;
+}
+const CATEGORIES = ['school','district','camp','preschool','afterschool','activity','community','tutoring','enrichment','other'];
+const _sources  = typeof sources !== 'undefined' ? sources : [];
+const _website  = typeof website !== 'undefined' ? website : '';
+%>
+
+<div class="mb-6">
+  <div class="flex items-start justify-between gap-4 mb-4 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-bold">All Events</h1>
+      <p class="text-sm text-slate-500 mt-0.5">
+        <%= events.length %> event<%= events.length !== 1 ? 's' : '' %>
+        <% if (category || q || _website) { %> matching current filter<% } %>
+      </p>
+    </div>
+  </div>
+
+  <form method="GET" action="/events" class="flex gap-2 flex-wrap items-center">
+    <div class="relative">
+      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+      <input type="text" name="q" value="<%= q %>" placeholder="Search events…"
+        class="border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+    </div>
+    <select name="category"
+      class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <option value="">All categories</option>
+      <% CATEGORIES.forEach(cat => { %>
+        <option value="<%= cat %>" <%= category === cat ? 'selected' : '' %>><%= cat %></option>
+      <% }) %>
+    </select>
+    <select name="website"
+      class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <option value="">All websites</option>
+      <% _sources.forEach(s => { %>
+        <option value="<%= s.id %>" <%= _website == s.id ? 'selected' : '' %>><%= s.name %></option>
+      <% }) %>
+    </select>
+    <button type="submit"
+      class="bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition">
+      Filter
+    </button>
+    <% if (category || q || _website) { %>
+      <a href="/events" class="text-sm text-slate-500 hover:text-slate-700 px-2 py-2">Clear</a>
+    <% } %>
+  </form>
+</div>
+
+<% if (events.length === 0) { %>
+  <div class="text-center py-16 text-slate-400">
+    <p class="text-4xl mb-3">🗓</p>
+    <% if (q || category || _website) { %>
+      <p class="text-lg font-medium text-slate-600">No events match your filter</p>
+      <p class="mt-1 text-sm"><a href="/events" class="text-blue-600 hover:underline">Clear filter</a></p>
+    <% } else { %>
+      <p class="text-lg font-medium text-slate-600">No events yet</p>
+      <p class="mt-1 text-sm">
+        <a href="/sources" class="text-blue-600 hover:underline">Refresh your websites</a> to populate events.
+      </p>
+    <% } %>
+  </div>
+<% } else { %>
+
+  <%
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = events.filter(ev => {
+    const d = ev.deadline_date || ev.event_date;
+    return !d || d >= today;
+  });
+  const past = events.filter(ev => {
+    const d = ev.deadline_date || ev.event_date;
+    return d && d < today;
+  });
+  %>
+
+  <% [
+    { label: 'Upcoming', list: upcoming },
+    { label: 'Past', list: past },
+  ].forEach(section => {
+    if (!section.list.length) return;
+  %>
+  <section class="mb-8">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3"><%= section.label %></h2>
+    <div class="space-y-1.5">
+    <% section.list.forEach(ev => {
+      const isDeadline = !!ev.deadline_date;
+      const dateStr = ev.deadline_date || ev.event_date;
+      const link = eventLink(ev);
+    %>
+      <div class="bg-white rounded-lg border <%= isDeadline ? 'border-orange-100 hover:border-orange-200' : 'border-slate-200 hover:border-slate-300' %> p-3.5 flex items-start justify-between gap-4 transition-colors">
+        <div class="flex gap-3 items-start min-w-0 flex-1">
+          <span class="mt-0.5 shrink-0"><%= isDeadline ? '⏰' : '📅' %></span>
+          <div class="min-w-0">
+            <p class="font-medium text-slate-900 truncate"><%= ev.title %></p>
+            <% if (ev.description) { %>
+              <p class="text-sm text-slate-500 truncate mt-0.5"><%= ev.description %></p>
+            <% } %>
+            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <% if (isDeadline) { %>
+                <span class="text-xs bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded">deadline</span>
+              <% } %>
+              <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded capitalize"><%= ev.category %></span>
+              <span class="text-xs text-slate-400"><%= ev.source_name %></span>
+            </div>
+          </div>
+        </div>
+        <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+          <p class="<%= isDeadline ? 'text-orange-600 font-medium' : 'text-slate-600' %> text-sm">
+            <%= fmtDate(dateStr) %>
+          </p>
+          <% if (link) { %>
+            <% if (isDeadline) { %>
+              <a href="<%= link %>" target="_blank" rel="noopener noreferrer"
+                 class="inline-block text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition whitespace-nowrap">
+                Register →
+              </a>
+            <% } else { %>
+              <a href="<%= link %>" target="_blank" rel="noopener noreferrer"
+                 class="inline-block text-xs font-medium border border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg transition whitespace-nowrap">
+                Learn More →
+              </a>
+            <% } %>
+          <% } else { %>
+            <span class="text-xs text-slate-400 italic">No link available</span>
+          <% } %>
+        </div>
+      </div>
+    <% }); %>
+    </div>
+  </section>
+  <% }); %>
+
+<% } %>
+
+<%- include('../partials/footer') %>

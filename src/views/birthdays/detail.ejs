@@ -1,0 +1,114 @@
+<%- include('../partials/header', { title: birthday.child_name + "'s Party" }) %>
+
+<div class="mb-4 flex items-center justify-between">
+  <a href="/birthdays" class="text-sm text-slate-500 hover:text-slate-700">← Birthdays</a>
+  <a href="/birthdays/<%= birthday.id %>/edit"
+     class="text-sm text-blue-600 hover:text-blue-800 border border-slate-200 hover:border-blue-300 px-3 py-1.5 rounded transition">
+    Edit
+  </a>
+</div>
+
+<%
+const daysUntil = Math.ceil((new Date(birthday.party_date + 'T12:00:00') - new Date()) / 86400000);
+const flash = typeof locals.flash !== 'undefined' ? locals.flash : null;
+const suggestCount = typeof locals.suggestCount !== 'undefined' ? locals.suggestCount : null;
+%>
+
+<% if (flash === 'suggestions_generated') { %>
+  <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-5 text-sm font-medium">
+    ✓ <%= suggestCount %> gift suggestion<%= suggestCount != 1 ? 's' : '' %> generated.
+  </div>
+<% } else if (flash === 'suggest_error') { %>
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-5 text-sm">
+    Something went wrong generating suggestions. Check that the Claude API key is set.
+  </div>
+<% } else if (flash === 'no_api_key') { %>
+  <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-5 text-sm">
+    No ANTHROPIC_API_KEY found in .env — add it and restart the server.
+  </div>
+<% } %>
+
+<!-- Birthday summary card -->
+<div class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold"><%= birthday.child_name %>'s Party</h1>
+      <p class="text-slate-500 mt-1">
+        Turning age <%= birthday.child_age %> ·
+        <%= new Date(birthday.party_date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) %>
+      </p>
+      <% if (daysUntil > 0) { %>
+        <p class="text-sm mt-1 <%= daysUntil <= 3 ? 'text-red-600 font-semibold' : daysUntil <= 7 ? 'text-orange-600 font-medium' : 'text-slate-500' %>">
+          <%= daysUntil %> day<%= daysUntil !== 1 ? 's' : '' %> away
+        </p>
+      <% } else if (daysUntil === 0) { %>
+        <p class="text-sm mt-1 text-red-600 font-bold">Party is today! 🎉</p>
+      <% } else { %>
+        <p class="text-sm mt-1 text-slate-400">Party has passed</p>
+      <% } %>
+      <% if (birthday.notes) { %>
+        <p class="text-sm text-slate-600 mt-3 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+          📝 <%= birthday.notes %>
+        </p>
+      <% } %>
+    </div>
+    <form method="POST" action="/birthdays/<%= birthday.id %>">
+      <input type="hidden" name="_method" value="DELETE" />
+      <button type="submit" onclick="return confirm('Delete this birthday?')"
+        class="text-red-400 hover:text-red-600 text-sm">Delete</button>
+    </form>
+  </div>
+</div>
+
+<!-- Gift Suggestions section -->
+<section>
+  <div class="flex items-center justify-between mb-3 gap-4 flex-wrap">
+    <h2 class="text-lg font-semibold">Gift Suggestions</h2>
+    <form method="POST" action="/birthdays/<%= birthday.id %>/suggest"
+      onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Generating…'">
+      <button type="submit"
+        class="text-sm bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-medium transition">
+        <%= gifts.length > 0 ? '↻ Regenerate suggestions' : '✨ Generate suggestions' %>
+      </button>
+    </form>
+  </div>
+
+  <% if (gifts.length === 0) { %>
+    <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-8 text-center text-slate-400">
+      <p class="text-3xl mb-3">🎁</p>
+      <p class="font-medium text-slate-600 mb-1">No gift ideas yet</p>
+      <% if (daysUntil <= 7 && daysUntil >= 0) { %>
+        <p class="text-sm">The party is close — click <strong>Generate suggestions</strong> above to get ideas now.</p>
+      <% } else { %>
+        <p class="text-sm">Suggestions generate automatically 7 days before the party, or click above to get them now.</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+    <% gifts.forEach(function(g) { %>
+      <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-start justify-between gap-4 hover:border-slate-300 transition-colors">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium text-slate-900"><%= g.suggestion_text %></p>
+          <% if (g.price_range) { %>
+            <p class="text-sm text-slate-500 mt-0.5"><%= g.price_range %></p>
+          <% } %>
+        </div>
+        <% if (g.url) { %>
+          <a href="<%= g.url %>" target="_blank" rel="noopener noreferrer"
+            class="shrink-0 text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 transition whitespace-nowrap">
+            <%= g.source === 'amazon' ? '🛒 Amazon' : 'View →' %>
+          </a>
+        <% } %>
+      </div>
+    <% }) %>
+    </div>
+    <p class="text-xs text-slate-400 mt-3">
+      Generated by Claude AI · <a href="/birthdays/<%= birthday.id %>/suggest"
+      onclick="event.preventDefault(); document.getElementById('regen-form').submit()"
+      class="hover:underline cursor-pointer">Regenerate</a>
+    </p>
+    <form id="regen-form" method="POST" action="/birthdays/<%= birthday.id %>/suggest" class="hidden"></form>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,47 @@
+<%- include('../partials/header', { title: 'Birthdays' }) %>
+
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold">Birthdays</h1>
+  <a href="/birthdays/new" class="bg-pink-600 text-white px-4 py-2 rounded font-medium hover:bg-pink-700 text-sm">
+    + Add Birthday
+  </a>
+</div>
+
+<% if (birthdays.length === 0) { %>
+  <p class="text-slate-400 text-center py-12">No birthdays added yet.</p>
+<% } else { %>
+  <div class="space-y-2">
+  <% birthdays.forEach(b => { %>
+    <% const daysUntil = Math.ceil((new Date(b.party_date + 'T12:00:00') - new Date()) / 86400000); %>
+    <div class="bg-white rounded-lg border border-slate-200 p-4 hover:border-pink-200 transition">
+      <div class="flex items-center justify-between gap-4">
+        <a href="/birthdays/<%= b.id %>" class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium"><%= b.child_name %></span>
+            <span class="text-slate-500 text-sm">age <%= b.child_age %></span>
+            <% if (daysUntil <= 7 && daysUntil >= 0) { %>
+              <span class="text-pink-600 text-sm font-medium">🎁 <%= daysUntil === 0 ? 'Today!' : `${daysUntil}d away` %></span>
+            <% } %>
+          </div>
+          <div class="mt-1 text-sm text-slate-600">
+            <%= new Date(b.party_date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'}) %>
+            <span class="text-xs text-slate-400 ml-2"><%= b.gift_count > 0 ? `${b.gift_count} gift ideas` : 'No gift ideas yet' %></span>
+          </div>
+        </a>
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="/birthdays/<%= b.id %>/edit"
+             class="text-sm text-blue-600 hover:text-blue-800 border border-slate-200 hover:border-blue-300 px-3 py-1.5 rounded transition">
+            Edit
+          </a>
+          <a href="/birthdays/<%= b.id %>"
+             class="text-sm text-slate-500 hover:text-slate-800 border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded transition">
+            View
+          </a>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>
